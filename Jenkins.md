@@ -140,3 +140,5 @@ sudo su
 apt install docker.io
 apt update
 docker hello-world
+
+sudo usermod -a -G docker jenkins

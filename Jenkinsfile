@@ -20,7 +20,6 @@ pipeline {
                 sh '''
                     whoami
                     docker --version
-                    docker compose version
                     docker ps
                 '''
             }
@@ -29,15 +28,7 @@ pipeline {
         stage('Build') {
             steps {
                 sh '''
-                    docker compose build
-                '''
-            }
-        }
-
-        stage('Start API') {
-            steps {
-                sh '''
-                    docker compose up -d mongo api
+                    docker compose build --no-cache
                 '''
             }
         }
@@ -45,19 +36,19 @@ pipeline {
         stage('Run API Tests') {
             steps {
                 sh '''
-                    docker compose run --rm api-testing
+                    docker compose up \
+                        --abort-on-container-exit \
+                        --exit-code-from api-testing
                 '''
             }
         }
     }
 
     post {
-
         always {
             sh '''
-                docker compose down -v --remove-orphans
+                docker compose down --volumes --remove-orphans || true
             '''
         }
-
     }
 }
