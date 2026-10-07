@@ -142,3 +142,4 @@ apt update
 docker hello-world
 
 sudo usermod -a -G docker jenkins
+chmod /var/run/docker.sock
