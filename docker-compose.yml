@@ -1,0 +1,31 @@
+services:
+  api-backend:
+    build:
+      context: ./api-backend
+    ports:
+      - "5001:5001"
+    environment:
+      PORT: 5001
+      HOSTNAME: 0.0.0.0
+      PUBLIC_HOSTNAME: api-backend
+      MONGODB_URI: ${MONGODB_URI:?Set MONGODB_URI in the root .env file}
+      JWT_SECRET: ${JWT_SECRET:?Set JWT_SECRET in the root .env file}
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://127.0.0.1:5001/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 20s
+
+  api-testing:
+    build:
+      context: .
+      dockerfile: ./api-testing/Dockerfile
+    environment:
+      API_HOST: api-backend
+      API_PORT: 5001
+      CI: "true"
+      SKIP_WEBSERVER: "true"
+    depends_on:
+      api-backend:
+        condition: service_healthy
