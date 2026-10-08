@@ -143,3 +143,8 @@ docker hello-world
 
 sudo usermod -a -G docker jenkins
 chmod /var/run/docker.sock
+docker compose version
+sudo apt install docker-compose-v2 -y
+su jenkins
+df -h
+need 20-30GB Disk space 
