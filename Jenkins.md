@@ -26,11 +26,11 @@ sudo apt install jenkins
 ```
 
 sudo apt install git
-http://34.201.76.43:8080/
+<http://34.201.76.43:8080/>
 sudo cat /var/lib/jenkins/secrets/initialAdminPassword
 
 fc1801d204dd406180860858e0360b5c
-input password at http://34.201.76.43:8080/
+input password at <http://34.201.76.43:8080/>
 
 and install suggested plugins
 create first Admin user
@@ -43,18 +43,17 @@ make a new pipeline
 
 GitHub hook trigger for GITScm polling
 Pipeline script from SCM
-https://github.com/amantiwari8861/_00_JenkinsSeleniumIntro.git
+<https://github.com/amantiwari8861/_00_JenkinsSeleniumIntro.git>
 
 cat /etc/passwd
 sudo visudo
 jenkins ALL=(ALL) NOPASSWD: ALL
 systemctl restart jenkins
 
-http://34.201.76.43:8080/github-webhook/
+<http://34.201.76.43:8080/github-webhook/>
 application/json
 
 /usr/lib/jvm/java-21-openjdk-amd64
-
 
 ```
 pipeline {
@@ -127,24 +126,16 @@ pipeline{
 }
 ```
 
-
-
-
-
-
-
-
-
-
 sudo su
 apt install docker.io
 apt update
-docker hello-world
-
-sudo usermod -a -G docker jenkins
-chmod /var/run/docker.sock
-docker compose version
 sudo apt install docker-compose-v2 -y
+sudo chmod 777 /var/run/docker.sock
+docker compose version
+sudo usermod -a -G docker jenkins
+
+
+
 su jenkins
 df -h
-need 20-30GB Disk space 
+need 20-30GB Disk space
