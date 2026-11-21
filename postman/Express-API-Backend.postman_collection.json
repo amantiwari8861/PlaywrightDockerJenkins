@@ -1,0 +1,1172 @@
+{
+  "info": {
+    "_postman_id": "b7e3f4a1-9c2d-4f8e-a1b6-2d5e8f0a7c31",
+    "name": "Express API Backend",
+    "description": "Complete request collection for the Express backend in DevOps/api-backend.\n\nFolders: Auth, User, Products, Health & Misc.\n\nHOW TO USE\n1. Import this file into Postman.\n2. Select the \"Express API Backend - Local\" environment (or edit the baseUrl collection variable).\n3. Run the Auth folder first, in order: \"Register user\" then \"Login\". These store userId, loginEmail, loginPassword and authToken as collection variables.\n4. The User folder uses a Bearer token ({{authToken}}) at folder level; the public /greet request overrides it.\n5. Then run User, Products and Health & Misc. Every request has assertions in its Tests tab.\n\nNOTE: Login also sets an httpOnly accessToken cookie. Postman keeps that cookie in its jar, so protected requests work even without the Bearer header. The \"no token\" negative request clears the cookie explicitly to exercise the 401 branch.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "auth": {
+    "type": "noauth"
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://127.0.0.1:5001",
+      "type": "string"
+    },
+    {
+      "key": "authToken",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "registerEmail",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "loginEmail",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "loginPassword",
+      "value": "Pass1234",
+      "type": "string"
+    },
+    {
+      "key": "userId",
+      "value": "000000000000000000000000",
+      "type": "string"
+    },
+    {
+      "key": "createdUserId",
+      "value": "000000000000000000000000",
+      "type": "string"
+    },
+    {
+      "key": "newUserEmail",
+      "value": "",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "Auth",
+      "description": "POST /api/v1/auth/register and /login. Run 'Register user' then 'Login' first so the other folders have a user id and a token.",
+      "item": [
+        {
+          "name": "Register user",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const email = 'pm.' + Date.now() + '@example.test';",
+                  "pm.collectionVariables.set('registerEmail', email);"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 201', function () { pm.response.to.have.status(201); });",
+                  "const body = pm.response.json();",
+                  "pm.test('success is true', function () { pm.expect(body.success).to.be.true; });",
+                  "pm.test('created user has no password in response', function () {",
+                  "  pm.expect(body.data.email).to.eql(pm.collectionVariables.get('registerEmail'));",
+                  "  pm.expect(body.data).to.not.have.property('password');",
+                  "  pm.expect(body.data._id).to.be.a('string');",
+                  "});",
+                  "pm.collectionVariables.set('userId', body.data._id);",
+                  "pm.collectionVariables.set('loginEmail', body.data.email);",
+                  "pm.collectionVariables.set('loginPassword', 'Pass1234');"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Postman User\",\n  \"email\": \"{{registerEmail}}\",\n  \"password\": \"Pass1234\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/auth/register",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "auth", "register"]
+            },
+            "description": "Creates a fresh account. A unique email is generated in the pre-request script. Stores the new id/credentials for the rest of the collection."
+          },
+          "response": []
+        },
+        {
+          "name": "Login",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 200', function () { pm.response.to.have.status(200); });",
+                  "const body = pm.response.json();",
+                  "pm.test('success is true and token is returned', function () {",
+                  "  pm.expect(body.success).to.be.true;",
+                  "  pm.expect(body.token).to.be.a('string');",
+                  "});",
+                  "pm.test('login sets an httpOnly accessToken cookie', function () {",
+                  "  const raw = pm.response.headers.get('Set-Cookie') || '';",
+                  "  pm.expect(raw).to.include('accessToken=');",
+                  "  pm.expect(raw.toLowerCase()).to.include('httponly');",
+                  "});",
+                  "pm.collectionVariables.set('authToken', body.token);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{loginEmail}}\",\n  \"password\": \"{{loginPassword}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/auth/login",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "auth", "login"]
+            },
+            "description": "Logs in with the user created by 'Register user' and stores the JWT in authToken for the User folder's Bearer auth."
+          },
+          "response": []
+        },
+        {
+          "name": "Login - wrong password (400)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 400', function () { pm.response.to.have.status(400); });",
+                  "pm.test('no token is returned', function () {",
+                  "  const body = pm.response.json();",
+                  "  pm.expect(body.success).to.be.false;",
+                  "  pm.expect(body).to.not.have.property('token');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{loginEmail}}\",\n  \"password\": \"WrongPassword!\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/auth/login",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "auth", "login"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Login - unknown account (404)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 404', function () { pm.response.to.have.status(404); });",
+                  "pm.test('success is false', function () { pm.expect(pm.response.json().success).to.be.false; });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"ghost.{{$randomUUID}}@example.test\",\n  \"password\": \"Pass1234\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/auth/login",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "auth", "login"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Register - duplicate email (409)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 409', function () { pm.response.to.have.status(409); });",
+                  "pm.test('success is false', function () { pm.expect(pm.response.json().success).to.be.false; });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Impostor\",\n  \"email\": \"{{loginEmail}}\",\n  \"password\": \"Pass1234\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/auth/register",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "auth", "register"]
+            },
+            "description": "Uses the email created by 'Register user', so it must be rejected as a duplicate."
+          },
+          "response": []
+        },
+        {
+          "name": "Register - missing fields (400)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 400', function () { pm.response.to.have.status(400); });",
+                  "pm.test('success is false', function () { pm.expect(pm.response.json().success).to.be.false; });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"No Password\",\n  \"email\": \"missing.{{$randomUUID}}@example.test\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/auth/register",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "auth", "register"]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "User",
+      "description": "All /api/v1/user routes. Folder-level Bearer auth uses {{authToken}}; /greet is public and overrides auth with No Auth.",
+      "auth": {
+        "type": "bearer",
+        "bearer": [
+          {
+            "key": "token",
+            "value": "{{authToken}}",
+            "type": "string"
+          }
+        ]
+      },
+      "item": [
+        {
+          "name": "Greet (public)",
+          "auth": {
+            "type": "noauth"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 200', function () { pm.response.to.have.status(200); });",
+                  "pm.test('returns the greeting text', function () {",
+                  "  pm.expect(pm.response.text()).to.include('Good Afternoon Sir!');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/user/greet",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "user", "greet"]
+            },
+            "description": "The only user route behind no authMiddleware. Sits before the guard in user.route.js."
+          },
+          "response": []
+        },
+        {
+          "name": "List all users",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 200', function () { pm.response.to.have.status(200); });",
+                  "const body = pm.response.json();",
+                  "pm.test('success is true and count matches data length', function () {",
+                  "  pm.expect(body.success).to.be.true;",
+                  "  pm.expect(body.count).to.eql(body.data.length);",
+                  "});",
+                  "pm.test('passwords are never returned', function () {",
+                  "  body.data.forEach(function (u) { pm.expect(u).to.not.have.property('password'); });",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/user",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "user"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "List users filtered by email",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 200', function () { pm.response.to.have.status(200); });",
+                  "const body = pm.response.json();",
+                  "pm.test('only the matching user is returned', function () {",
+                  "  pm.expect(body.count).to.eql(1);",
+                  "  pm.expect(body.data[0].email).to.eql(pm.collectionVariables.get('loginEmail'));",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/user?email={{loginEmail}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "user"],
+              "query": [
+                {
+                  "key": "email",
+                  "value": "{{loginEmail}}"
+                }
+              ]
+            },
+            "description": "getAllUsers allows exact equality filters on name and email only."
+          },
+          "response": []
+        },
+        {
+          "name": "Get user by id",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 200', function () { pm.response.to.have.status(200); });",
+                  "const body = pm.response.json();",
+                  "pm.test('returns the requested user without password', function () {",
+                  "  pm.expect(body.data._id).to.eql(pm.collectionVariables.get('userId'));",
+                  "  pm.expect(body.data).to.not.have.property('password');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/user/{{userId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "user", "{{userId}}"]
+            },
+            "description": "Uses the userId captured by Auth / Register user."
+          },
+          "response": []
+        },
+        {
+          "name": "Get user by id - invalid id (400)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 400', function () { pm.response.to.have.status(400); });",
+                  "pm.test('success is false', function () { pm.expect(pm.response.json().success).to.be.false; });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/user/not-an-id",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "user", "not-an-id"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get user by id - unknown id (404)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 404', function () { pm.response.to.have.status(404); });",
+                  "pm.test('success is false', function () { pm.expect(pm.response.json().success).to.be.false; });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/user/000000000000000000000000",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "user", "000000000000000000000000"]
+            },
+            "description": "A well-formed ObjectId that is not stored in the database."
+          },
+          "response": []
+        },
+        {
+          "name": "No token (401)",
+          "auth": {
+            "type": "noauth"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 401', function () { pm.response.to.have.status(401); });",
+                  "pm.test('success is false', function () { pm.expect(pm.response.json().success).to.be.false; });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Cookie",
+                "value": "accessToken=",
+                "description": "Clears the cookie set by Login so the auth guard actually sees no credentials."
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/user",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "user"]
+            },
+            "description": "Negative auth check. Postman stores the login cookie, so the Cookie header is cleared explicitly here."
+          },
+          "response": []
+        },
+        {
+          "name": "Create user",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.collectionVariables.set('newUserEmail', 'created.' + Date.now() + '@example.test');"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 201', function () { pm.response.to.have.status(201); });",
+                  "const body = pm.response.json();",
+                  "pm.test('created user is returned without password', function () {",
+                  "  pm.expect(body.success).to.be.true;",
+                  "  pm.expect(body.data.email).to.eql(pm.collectionVariables.get('newUserEmail'));",
+                  "  pm.expect(body.data).to.not.have.property('password');",
+                  "});",
+                  "pm.collectionVariables.set('createdUserId', body.data._id);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Created By Postman\",\n  \"email\": \"{{newUserEmail}}\",\n  \"password\": \"Pass1234\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/user",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "user"]
+            },
+            "description": "Creates a throwaway account whose id is used by the Update and Delete requests."
+          },
+          "response": []
+        },
+        {
+          "name": "Create user - duplicate email (409)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 409', function () { pm.response.to.have.status(409); });",
+                  "pm.test('success is false', function () { pm.expect(pm.response.json().success).to.be.false; });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Duplicate\",\n  \"email\": \"{{loginEmail}}\",\n  \"password\": \"Pass1234\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/user",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "user"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Update user",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 200', function () { pm.response.to.have.status(200); });",
+                  "const body = pm.response.json();",
+                  "pm.test('name was changed and password is hidden', function () {",
+                  "  pm.expect(body.data.name).to.eql('Renamed By Postman');",
+                  "  pm.expect(body.data).to.not.have.property('password');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Renamed By Postman\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/user/{{createdUserId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "user", "{{createdUserId}}"]
+            },
+            "description": "Partial update of the user created by 'Create user'. A name-only PUT must not touch the password hash."
+          },
+          "response": []
+        },
+        {
+          "name": "Update user - empty body (400)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 400', function () { pm.response.to.have.status(400); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/user/{{userId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "user", "{{userId}}"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Delete user",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 200', function () { pm.response.to.have.status(200); });",
+                  "pm.test('success is true', function () { pm.expect(pm.response.json().success).to.be.true; });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/user/{{createdUserId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "user", "{{createdUserId}}"]
+            },
+            "description": "Deletes the throwaway user from 'Create user', keeping the login account intact."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Products",
+      "description": "All /api/v1/products routes. These endpoints are public (no auth required).",
+      "item": [
+        {
+          "name": "List products",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 200', function () { pm.response.to.have.status(200); });",
+                  "const body = pm.response.json();",
+                  "pm.test('success is true and data is an array', function () {",
+                  "  pm.expect(body.success).to.be.true;",
+                  "  pm.expect(body.data).to.be.an('array');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/products",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "products"]
+            },
+            "description": "Local upload paths are rewritten to absolute URLs in the response. No auth needed."
+          },
+          "response": []
+        },
+        {
+          "name": "Create product (multipart, no image)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 201', function () { pm.response.to.have.status(201); });",
+                  "const body = pm.response.json();",
+                  "pm.test('product fields and nested rating are correct', function () {",
+                  "  pm.expect(body.success).to.be.true;",
+                  "  pm.expect(body.data.price).to.eql(19.99);",
+                  "  pm.expect(body.data.category).to.eql('electronics');",
+                  "  pm.expect(body.data.image).to.be.an('array').that.is.empty;",
+                  "  pm.expect(body.data.rating.rate).to.eql(4.5);",
+                  "  pm.expect(body.data.rating.count).to.eql(120);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "title",
+                  "value": "Postman-Product-{{$randomUUID}}",
+                  "type": "text"
+                },
+                {
+                  "key": "price",
+                  "value": "19.99",
+                  "type": "text"
+                },
+                {
+                  "key": "description",
+                  "value": "Created from the Postman collection",
+                  "type": "text"
+                },
+                {
+                  "key": "category",
+                  "value": "electronics",
+                  "type": "text"
+                },
+                {
+                  "key": "rating[rate]",
+                  "value": "4.5",
+                  "type": "text"
+                },
+                {
+                  "key": "rating[count]",
+                  "value": "120",
+                  "type": "text"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/products",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "products"]
+            },
+            "description": "Multipart POST. Images are optional; this variant sends only text fields."
+          },
+          "response": []
+        },
+        {
+          "name": "Create product (with image upload)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 201', function () { pm.response.to.have.status(201); });",
+                  "const body = pm.response.json();",
+                  "pm.test('uploaded image path is stored with forward slashes', function () {",
+                  "  pm.expect(body.data.image).to.be.an('array');",
+                  "  pm.expect(body.data.image).to.have.lengthOf.at.least(1);",
+                  "  body.data.image.forEach(function (p) { pm.expect(p).to.not.include('\\\\'); });",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "title",
+                  "value": "Postman-Image-{{$randomUUID}}",
+                  "type": "text"
+                },
+                {
+                  "key": "price",
+                  "value": "29.99",
+                  "type": "text"
+                },
+                {
+                  "key": "description",
+                  "value": "Created with an uploaded image",
+                  "type": "text"
+                },
+                {
+                  "key": "category",
+                  "value": "electronics",
+                  "type": "text"
+                },
+                {
+                  "key": "images",
+                  "type": "file",
+                  "src": [],
+                  "disabled": true,
+                  "description": "Enable this row and pick a PNG/JPEG/WebP file. Max 5 files, 5 MB each."
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/products",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "products"]
+            },
+            "description": "Same endpoint with the 'images' file field. It is disabled by default: enable it in the Body tab and choose an image file before sending."
+          },
+          "response": []
+        },
+        {
+          "name": "Create product - missing fields (400)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 400', function () { pm.response.to.have.status(400); });",
+                  "pm.test('validation errors list the missing fields', function () {",
+                  "  const body = pm.response.json();",
+                  "  pm.expect(body.success).to.be.false;",
+                  "  pm.expect(body.errors).to.have.property('price');",
+                  "  pm.expect(body.errors).to.have.property('description');",
+                  "  pm.expect(body.errors).to.have.property('category');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "title",
+                  "value": "Incomplete-{{$randomUUID}}",
+                  "type": "text"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/products",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "products"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Save multiple products (save-all)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 201', function () { pm.response.to.have.status(201); });",
+                  "const body = pm.response.json();",
+                  "pm.test('both products were inserted', function () {",
+                  "  pm.expect(body.success).to.be.true;",
+                  "  pm.expect(body.data).to.have.lengthOf(2);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "[\n  {\n    \"title\": \"Bulk-A-{{$randomUUID}}\",\n    \"price\": 10,\n    \"description\": \"first product\",\n    \"category\": \"books\",\n    \"image\": [],\n    \"rating\": { \"rate\": 4, \"count\": 10 }\n  },\n  {\n    \"title\": \"Bulk-B-{{$randomUUID}}\",\n    \"price\": 20,\n    \"description\": \"second product\",\n    \"category\": \"books\",\n    \"image\": [],\n    \"rating\": { \"rate\": 5, \"count\": 20 }\n  }\n]",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/products/save-all",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "products", "save-all"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Save multiple products - invalid batch (400)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 400', function () { pm.response.to.have.status(400); });",
+                  "pm.test('success is false with validation errors', function () {",
+                  "  const body = pm.response.json();",
+                  "  pm.expect(body.success).to.be.false;",
+                  "  pm.expect(body.errors).to.be.an('object');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "[\n  {\n    \"title\": \"Invalid-{{$randomUUID}}\",\n    \"category\": \"books\",\n    \"image\": []\n  }\n]",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/products/save-all",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "products", "save-all"]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Health & Misc",
+      "description": "Server health check, static file mounts and the JSON 404 handler.",
+      "item": [
+        {
+          "name": "Health check",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 200', function () { pm.response.to.have.status(200); });",
+                  "pm.test('server reports it is up', function () {",
+                  "  pm.expect(pm.response.text()).to.include('Server is Up and Running!');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/health",
+              "host": ["{{baseUrl}}"],
+              "path": ["health"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Static product form page",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 200', function () { pm.response.to.have.status(200); });",
+                  "pm.test('page contains the add-product form', function () {",
+                  "  pm.expect(pm.response.text()).to.include('Add Product');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/",
+              "host": ["{{baseUrl}}"],
+              "path": [""]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Unknown route (404)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 404', function () { pm.response.to.have.status(404); });",
+                  "pm.test('JSON 404 with success false', function () {",
+                  "  const body = pm.response.json();",
+                  "  pm.expect(body.success).to.be.false;",
+                  "  pm.expect(body.message).to.include('Route not found');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/nope",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "nope"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Missing uploaded file (404)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 404', function () { pm.response.to.have.status(404); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/uploads/does-not-exist.png",
+              "host": ["{{baseUrl}}"],
+              "path": ["uploads", "does-not-exist.png"]
+            }
+          },
+          "response": []
+        }
+      ]
+    }
+  ]
+}
