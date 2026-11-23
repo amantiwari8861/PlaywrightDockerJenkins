@@ -2,6 +2,11 @@ pipeline {
 
     agent any
 
+    environment {
+        MONGODB_URI = credentials('MONGODB_URI')
+        JWT_SECRET  = credentials('JWT_SECRET')
+    }
+
     options {
         timestamps()
         timeout(time: 30, unit: 'MINUTES')
