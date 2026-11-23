@@ -7,7 +7,7 @@
 sudo apt update
 sudo apt install openjdk-21-jdk
 # sudo apt install fontconfig openjdk-21-jre
-sudo apt update
+sudo apt update && sudo apt upgrade
 sudo apt install -y openjdk-21-jdk fontconfig
 
 java -version
@@ -22,7 +22,7 @@ echo "deb [signed-by=/etc/apt/keyrings/jenkins-keyring.asc]" \
   https://pkg.jenkins.io/debian-stable binary/ | sudo tee \
   /etc/apt/sources.list.d/jenkins.list > /dev/null
 sudo apt update
-sudo apt install jenkins
+sudo apt install jenkins -y
 ```
 
 sudo apt install git
@@ -126,15 +126,16 @@ pipeline{
 }
 ```
 
-sudo su
-apt install docker.io
 apt update
+sudo su
+
+apt install docker.io
 sudo apt install docker-compose-v2 -y
-sudo chmod 777 /var/run/docker.sock
 docker compose version
+<!-- sudo chmod 777 /var/run/docker.sock -->
 sudo usermod -a -G docker jenkins
-
-
+sudo systemctl restart jenkins
+sudo -u jenkins docker ps
 
 su jenkins
 df -h
